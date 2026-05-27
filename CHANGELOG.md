@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0 (2026-05-27)
+
+
+### Miscellaneous Chores
+
+* initial release ([4764b66](https://github.com/mykemeynell/laravel-decorators/commit/4764b669a03e6e0e66c365cf126824b8c648c41c))
+
 ## [0.1.2](https://github.com/mykemeynell/laravel-decorators/compare/v0.1.1...v0.1.2) (2026-05-27)
 
 

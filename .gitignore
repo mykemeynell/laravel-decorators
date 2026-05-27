@@ -1,0 +1,11 @@
+.idea
+vendor
+coverage
+.output.txt
+.phpunit.cache
+!.gitkeep
+composer.lock
+.phpunit.result.cache
+phpstan-baseline.neon
+.php-cs-fixer.cache
+docs

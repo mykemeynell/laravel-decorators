@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Attribute;
+use MykeMeynell\Laravel\Decorators\Contracts\MethodDecorator;
+
+#[Attribute(Attribute::TARGET_METHOD)]
+final class {{ class }} implements MethodDecorator
+{
+    /**
+     * Create a new decorator instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function wrap(callable $next, array $context = []): callable
+    {
+        return function (array $args) use ($next, $context): mixed {
+            // TODO: Implement decorator...
+
+            return $next($args);
+        };
+    }
+}

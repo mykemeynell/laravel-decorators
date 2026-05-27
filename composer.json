@@ -1,0 +1,58 @@
+{
+    "name": "mykemeynell/laravel-decorators",
+    "description": "Attribute-based method decorators (Log, Cache, Retry, …) wired into the Laravel IoC container.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "illuminate/cache": "^11.0|^12.0|^13.0",
+        "illuminate/container": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/log": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "code-lts/doctum": "^5.6",
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.29",
+        "orchestra/testbench": "^11.0",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11"
+    },
+    "autoload": {
+        "psr-4": {
+            "MykeMeynell\\Laravel\\Decorators\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MykeMeynell\\Laravel\\Decorators\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "MykeMeynell\\Laravel\\Decorators\\DecoratorServiceProvider"
+            ],
+            "aliases": {
+                "Decorator": "MykeMeynell\\Laravel\\Decorators\\Facades\\Decorator"
+            }
+        }
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit",
+        "test:coverage": "\"$(which php)\" -dxdebug.coverage_enable=1 -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-html coverage",
+        "test:coverage:serve": "composer test:coverage && open coverage/index.html",
+        "lint": "./vendor/bin/pint --test",
+        "lint:fix": "./vendor/bin/pint",
+        "analyze": "./vendor/bin/phpstan analyse",
+        "analyze:fix": "./vendor/bin/phpstan analyse --fix",
+        "docs": "./vendor/bin/doctum.php update ./doctum.config.php",
+        "docs:serve": "cd ./docs && php -S localhost:9091"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

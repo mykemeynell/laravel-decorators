@@ -1,0 +1,155 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+    types: [ opened, synchronize, reopened, closed ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '--no-change') }}
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          # Laravel 11
+          - php: "8.2"
+            laravel: "^11.0"
+            testbench: "^9.0"
+          - php: "8.3"
+            laravel: "^11.0"
+            testbench: "^9.0"
+          - php: "8.4"
+            laravel: "^11.0"
+            testbench: "^9.0"
+
+          # Laravel 12
+          - php: "8.2"
+            laravel: "^12.0"
+            testbench: "^10.0"
+          - php: "8.3"
+            laravel: "^12.0"
+            testbench: "^10.0"
+          - php: "8.4"
+            laravel: "^12.0"
+            testbench: "^10.0"
+          - php: "8.5"
+            laravel: "^12.0"
+            testbench: "^10.0"
+
+          # Laravel 13
+          - php: "8.3"
+            laravel: "^13.0"
+            testbench: "^11.0"
+          - php: "8.4"
+            laravel: "^13.0"
+            testbench: "^11.0"
+          - php: "8.5"
+            laravel: "^13.0"
+            testbench: "^11.0"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, bcmath, pdo, sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: |
+          composer require \
+          "illuminate/cache:${{ matrix.laravel }}" \
+          "illuminate/container:${{ matrix.laravel }}" \
+          "illuminate/database:${{ matrix.laravel }}" \
+          "illuminate/log:${{ matrix.laravel }}" \
+          "illuminate/support:${{ matrix.laravel }}" \
+          "illuminate/http:${{ matrix.laravel }}" \
+          "orchestra/testbench:${{ matrix.testbench }}" \
+          --dev \
+          --no-interaction \
+          --no-update
+          composer update --prefer-dist --no-interaction
+
+      - name: Run Tests
+        run: composer test
+
+  lint:
+    name: Commit/PR lint
+    needs: tests
+    if: github.event_name == 'pull_request' && github.event.action != 'closed' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-please:
+    name: Release Please
+    needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        with:
+          release-type: php
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-docs:
+    name: Publish docs
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release-please')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Generate Documentation
+        run: composer docs
+        env:
+          DOCS_URL: ${{ vars.DOCS_URL }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./docs
+          force_orphan: true
+
+  cleanup-release-please:
+    name: Cleanup release-please branch
+    needs: publish-docs
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release-please')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete release-please branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X DELETE "/repos/${{ github.repository }}/git/refs/heads/${{ github.event.pull_request.head.ref }}"
